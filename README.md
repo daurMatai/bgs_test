@@ -65,3 +65,11 @@ In the root folder of the project
 or
 
     docker-compose up -d
+
+## API
+
+    GET `http://localhost:8088/api/members` - get all members
+    GET `http://localhost:8088/api/members?event=1` - get all members filtered by event
+    POST `http://localhost:8088/api/member` - create member {email, first_name, last_name, event_id}
+    POST `http://localhost:8088/api/member/{id}` - update member {first_name, last_name}
+    DELETE `http://localhost:8088/api/member/{id}` - delete member
