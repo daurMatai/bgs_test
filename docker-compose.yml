@@ -1,0 +1,57 @@
+version: '3'
+services:
+  bgs-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: digitalocean.com/php
+    container_name: bgs-app
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - bgs-app-network
+  bgs-webserver:
+    image: nginx:alpine
+    container_name: bgs-webserver
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - bgs-app
+    ports:
+      - "${PORT_HTTP}:80"
+      - "${PORT_HTTPS}:443"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/${APP_ENV}/conf.d/:/etc/nginx/conf.d/
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    networks:
+      - bgs-app-network
+  bgs-db:
+    image: postgres:9.6
+    container_name: bgs-db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - bgs-dbdata:/var/lib/postgresql/
+      - ./docker/postgres/:/docker-entrypoint-initdb.d/
+    networks:
+      - bgs-app-network
+
+networks:
+  bgs-app-network:
+    driver: bridge
+
+volumes:
+  bgs-dbdata:
+    driver: local
